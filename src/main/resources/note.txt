@@ -1,0 +1,49 @@
+shiro 笔记
+
+
+1.jar包
+ <dependency>
+	    <groupId>org.apache.shiro</groupId>
+	    <artifactId>shiro-all</artifactId>
+	    <version>1.3.0</version>
+</dependency>
+
+2.在web.xml 中配置shiro 的过滤器org.springframework.web.filter.DelegatingFilterProxy
+	--targetBeanName用来指定spring IOC容器中的bean实例    如果不指定的话      shiro 将根据filter-name 来找spring IOC 中的bean实例
+	--该过滤器指定过滤一切请求
+
+3.spring配置文件中的配置 
+  --配置安全管理器(shiro的核心)securityManager 类名:org.apache.shiro.web.mgt.DefaultWebSecurityManager 并指定缓存管理器，认证管理器，以及授权管理器
+  --配置缓存管理器 cacheManager  类名:org.apache.shiro.cache.ehcache.EhCacheManager   这里使用的是Ehcache  
+  --配置认证管理器(authenticator) 类名:org.apache.shiro.authc.pam.ModularRealmAuthenticator
+  		--认证管理器需指定realms 可指定一个或多个 
+  		--这些realm 必须继承AuthenticatingRealm 类或者AuthorizingRealm 后者是前者的子类   多了授权功能
+  		--realm 中可以指定密码加密的实例(credentialsMatcher) 类名:org.apache.shiro.authc.credential.HashedCredentialsMatcher
+  		--credentialsMatcher 中可以指定密码的加密方式(hashAlgorithmName)  有MD5 和SHA1 两种(不可逆加密)以及加密的次数(hashIterations)
+  		--如果指定密码要加密的话，数据库中存储的密码必须是密文，不然shiro 在做密码对比的时候对不上即两边都要加密 
+  		
+  --配置lifecycleBeanPostProcessor来管理spring IOC 容器中shiro对象(固定)  类名:org.apache.shiro.spring.LifecycleBeanPostProcessor
+  --启用shiro 注解  org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator		
+  --org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor
+  --网络配置  org.apache.shiro.spring.remoting.SecureRemoteInvocationExecutor
+  
+  --配置shiro 的过滤器 
+  		--指定安全管理器
+  		--指定登录的路径
+  		--指定登录成功的路径
+  		--指定没有权限访问的路径
+  		--shiro过滤器的具体配置    如下例子:
+  			/logon.jsp =anon     根目录下的logon.jsp 不需要认证  即不用登录就可访问
+  			/logon?.jsp =anon    ?是字符匹配符   代表一个字符  表示 根目录下的logon1.jsp logon2.jsp 不需要认证  即不用登录就可访问  而 logon12.jsp logon.jsp 不包含在里面
+  			/logon*.jsp =anon    *代表一个或多个字符  也可没有 
+  		    /success.jsp =authc  success.jsp  需要认证成功才能访问
+  		    /admin.jsp = roles[admin]  admin.jsp  需要具有admin 角色的人才能访问
+  		    
+  		    
+  		    
+  		   	
+  			
+  		
+  
+  		
+  		

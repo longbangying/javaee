@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+	
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="cacheManager" ref="cacheManager"></property>
+	<!-- 	<property name="sessionMode" value="native"></property>
+		<property name="Realm" ref="myrealm"></property> -->
+		<property name="authenticator" ref="authenticator"></property>
+		<property name="authorizer" ref="authorizer"></property>
+	</bean>
+	<!-- 认证管理器  有多个realm 时可配置该管理器    如果只有一个的话直接在securityManager 中指定相应的Realm即可  如 <property name="Realm" ref="myrealm"></property>-->
+	<bean id ="authenticator" class ="org.apache.shiro.authc.pam.ModularRealmAuthenticator">
+		<property name="realms">
+			<list>
+				<ref bean ="myrealm"></ref>
+			</list>
+		</property>
+	</bean>
+	<!-- 授权管理器 -->
+	<bean id ="authorizer" class="org.apache.shiro.authz.ModularRealmAuthorizer">
+		<property name="realms" >
+			<list>
+					<ref bean ="myrealm"></ref>
+			</list>
+		</property>
+	</bean>
+	<bean id="myrealm" class="com.shiro.bean.ShiroImpl">
+		<!-- 指定密码的加密对象 -->
+		<property name="credentialsMatcher" >
+			<bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+				<!-- 指定加密的方式 -->
+				<property name="hashAlgorithmName" value="MD5"></property>
+				<!-- 指定加密的次数 -->
+				<property name="hashIterations" value="1024"></property>
+			</bean>
+		</property>
+	
+	</bean>
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+		<!-- <property name="cacheManagerConfigFile" value="classpath:ehcache.xml"></property> -->
+	
+	</bean>
+	<!-- 必须有的实例，用来管理spring容器中常见的shiro对象 -->
+	<bean id ="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"></bean>
+	<!-- 启用shiro注解 -->
+	<bean id="" class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" 
+		depends-on="lifecycleBeanPostProcessor"></bean>
+		
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager"></property>
+	</bean>
+	<!-- 网络方面 -->
+	<bean id="secureRemoteInvocationExecutor" class="org.apache.shiro.spring.remoting.SecureRemoteInvocationExecutor">
+		<property name="securityManager" ref="securityManager"></property>
+	</bean>
+	<!-- 配置shiro的Filter
+		这个bean 的id必须与web.xml  中配置的shiro的filter名字相同
+		或者在web.xml的shiro过滤器中指定
+	 -->
+	<bean id="shiroFilter11" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<property name="securityManager" ref="securityManager"></property>
+		<property name="loginUrl" value="/logon.jsp"></property>
+		<!-- 登录成功的路径 -->
+		<property name="successUrl" value="/success.jsp"></property>
+		<!-- 未授权的返回路径 -->
+		<property name="unauthorizedUrl" value="/unauthorized.jsp"></property>
+		<!-- 完成shiro过滤的具体配置 -->
+		<property name="filterChainDefinitions">
+			<value>
+				/logon*.jsp = anon
+				/logon = anon
+				/logout = logout
+				/admin.jsp =roles[admin]
+				/user.jsp = roles[user]
+				/** = authc
+			</value>
+		</property>
+	</bean>
+	
+	
+	
+	
+</beans>
